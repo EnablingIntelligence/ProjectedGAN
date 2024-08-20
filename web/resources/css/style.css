@@ -1,0 +1,26 @@
+.container {
+    text-align: center;
+
+    .header {
+        margin: 20px auto;
+    }
+
+    .info-container {
+        margin: 20px auto;
+    }
+
+    .content-container {
+
+        .image-container {
+            height: 256px;
+            width: 256px;
+            margin: 20px auto;
+            border: solid 1px black;
+
+        }
+
+        .action-container {
+            margin: 20px auto;
+        }
+    }
+}

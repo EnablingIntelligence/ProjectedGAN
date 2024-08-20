@@ -2,11 +2,30 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title>Projected GAN Image Generator</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="resources/css/style.css">
 </head>
 
 <body>
+<div id="container" class="container">
+    <div id="header" class="header">
+        <h1>Projected GAN Image Generator</h1>
+    </div>
+
+    <div id="info-container" class="info-container">
+        <span>Click on the <strong><i>Generate Image</i></strong> button to create your first image or to create a new one.</span>
+    </div>
+
+    <div id="content-container" class="content-container">
+        <div id="image-container" class="image-container">
+            <img id="image" src="" alt="Projected GAN generated image"/>
+        </div>
+        <div id="action-container" class="action-container">
+            <button id="generate-button">Generate Image</button>
+        </div>
+    </div>
+</div>
+
 <div id="scripts">
-    <script src="js/request.js"></script>
+    <script src="resources/js/request.js"></script>
 </div>
 </body>

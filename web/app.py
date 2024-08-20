@@ -14,4 +14,5 @@ def load_frontend():
 def generate_image():
     # TODO generate image
     # TODO return image
+    print("Generating image...")
     pass
