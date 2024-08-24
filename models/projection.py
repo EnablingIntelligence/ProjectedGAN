@@ -102,8 +102,6 @@ class ProjectionModel(nn.Module):
     def __init__(self, resolution: int = 256):
         super().__init__()
 
-        # self.diff_aug = DiffAugment(policy="color,translation,cutout")
-
         self.pretrained_model = EfficientNet(resolution)
         channels = self.pretrained_model.channels
 
@@ -133,13 +131,6 @@ class ProjectionModel(nn.Module):
         feat32 = self.csm112(features[2], feat16)
         feat64 = self.csm40(features[1], feat32)
         feat128 = self.csm24(features[0], feat64)
-
-        # self.channels = [
-        #     self.get_ch(feat128),
-        #     self.get_ch(feat64),
-        #     self.get_ch(feat32),
-        #     self.get_ch(feat16),
-        # ]
 
         return {0: feat128, 1: feat64, 2: feat32, 3: feat16}
 
