@@ -57,13 +57,13 @@ class MultiScaleDiscriminator(nn.Module):
         )
 
     def forward(self, feats: dict):
-        outputs = {}
+        logits = {}
         for disc, feat_idx in zip(self.discriminators, feats):
             feat = feats[feat_idx]
-            output = disc(feat)
-            outputs[feat_idx] = output
+            logit = disc(feat)
+            logits[feat_idx] = logit
 
-        return outputs
+        return logits
 
 
 def main():
@@ -79,9 +79,9 @@ def main():
     x_fake = G(z)
     features = projection(x_fake)
 
-    output = D(features)
-    for idx in output.keys():
-        print(output[idx].shape)
+    logits = D(features)
+    for idx in logits.keys():
+        print(logits[idx].shape)
 
 
 if __name__ == "__main__":
