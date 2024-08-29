@@ -22,8 +22,8 @@ class HingeLossD(nn.Module):
         super().__init__()
 
     def forward(self, real_logits, fake_logits):
-        real_loss = torch.mean(F.relu(1.0 - real_logits))
-        fake_loss = torch.mean(F.relu(1.0 + fake_logits))
+        real_loss = torch.mean(F.relu(1.0 - real_logits)) # D(x)
+        fake_loss = torch.mean(F.relu(1.0 + fake_logits)) # D(G(z))
         d_loss = real_loss + fake_loss
         return d_loss
 
@@ -33,7 +33,7 @@ class HingeLossG(nn.Module):
         super().__init__()
 
     def forward(self, fake_logits):
-        g_loss = -torch.mean(fake_logits)
+        g_loss = -torch.mean(fake_logits) # D(G(z))
         return g_loss
 
 
