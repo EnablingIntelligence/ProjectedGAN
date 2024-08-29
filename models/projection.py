@@ -67,7 +67,7 @@ class EfficientNet(nn.Module):
 
 class RandomProjection(nn.Module):
     """
-    CSM + CSM
+    CSM + CCM
     """
 
     def __init__(self, in_ch, out_ch):
