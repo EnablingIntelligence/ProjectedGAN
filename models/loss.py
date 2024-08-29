@@ -39,28 +39,30 @@ class HingeLossG(nn.Module):
 
 def main():
     C = 3
-    Batch_size = 4
+    batch_size = 4
     latent_dim = 256
     resolution = 256
     lr = 0.0002
     num_epochs = 1
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    
+    loss_G = HingeLossG()
+    loss_D = HingeLossD()
 
-    lossG = HingeLossG()
-    lossD = HingeLossD()
+    G = FastGanGenerator(resolution).to(device)
+    projection = ProjectionModel(resolution).to(device)
+    D = MultiScaleDiscriminator(projection.channels).to(device)
 
-    G = FastGanGenerator(resolution)
-    projection = ProjectionModel(resolution)
-    D = MultiScaleDiscriminator(projection.channels)
-
-    optimD = Adam(D.parameters(), lr)
-    optimG = Adam(G.parameters(), lr)
+    
+    optim_D = Adam(D.parameters(), lr)
+    optim_G = Adam(G.parameters(), lr)
 
     for epoch in range(num_epochs):
         # dummy real sample
-        x_real = z = torch.randn(Batch_size, C, resolution, resolution)
+        x_real = z = torch.randn(batch_size, C, resolution, resolution, device=device)
 
         # For the discriminator training
-        z = torch.randn(Batch_size, latent_dim, 1, 1)
+        z = torch.randn(batch_size, latent_dim, 1, 1, device=device)
         x_fake = G(z).detach()  # Detach to avoid backpropagation through the generator
 
         features_fake = projection(x_fake)
@@ -70,32 +72,32 @@ def main():
         logits_real = D(features_real)
 
         # Compute loss for Discriminator
-        total_d_loss = 0.0
+        total_D_loss = 0.0
         for logit_real, logit_fake in zip(logits_real.values(), logits_fake.values()):
-            loss_disc = lossD(logit_real, logit_fake)
-            total_d_loss += loss_disc
+            loss_disc = loss_D(logit_real, logit_fake)
+            total_D_loss += loss_disc
 
-        optimD.zero_grad()
-        total_d_loss.backward()
-        optimD.step()
+        optim_D.zero_grad()
+        total_D_loss.backward()
+        optim_D.step()
 
         # For the generator training
-        z = torch.randn(Batch_size, latent_dim, 1, 1)
+        z = torch.randn(batch_size, latent_dim, 1, 1, device=device)
         x_fake = G(z)
         features_fake = projection(x_fake)
         logits_fake = D(features_fake)
 
-        total_g_loss = 0.0
+        total_G_loss = 0.0
         for logit in logits_fake.values():
-            loss_gen = lossG(logit)
-            total_g_loss += loss_gen
+            loss_gen = loss_G(logit)
+            total_G_loss += loss_gen
 
-        optimG.zero_grad()
-        total_g_loss.backward()
-        optimG.step()
+        optim_G.zero_grad()
+        total_G_loss.backward()
+        optim_G.step()
 
-        print(f"Epoch {epoch} - DLoss: {total_d_loss.cpu().detach().numpy():.03f}")
-        print(f"Epoch {epoch} - GLoss: {total_g_loss.cpu().detach().numpy():.03f}")
+        print(f"Epoch {epoch} - DLoss: {total_D_loss.cpu().detach().numpy():.03f}")
+        print(f"Epoch {epoch} - GLoss: {total_G_loss.cpu().detach().numpy():.03f}")
 
 
 if __name__ == "__main__":
