@@ -22,8 +22,8 @@ class HingeLossD(nn.Module):
         super().__init__()
 
     def forward(self, real_logits, fake_logits):
-        real_loss = torch.mean(F.relu(1.0 - real_logits)) # D(x)
-        fake_loss = torch.mean(F.relu(1.0 + fake_logits)) # D(G(z))
+        real_loss = torch.mean(F.relu(1.0 - real_logits))
+        fake_loss = torch.mean(F.relu(1.0 + fake_logits)) 
         d_loss = real_loss + fake_loss
         return d_loss
 
@@ -33,7 +33,7 @@ class HingeLossG(nn.Module):
         super().__init__()
 
     def forward(self, fake_logits):
-        g_loss = -torch.mean(fake_logits) # D(G(z))
+        g_loss = -torch.mean(fake_logits)
         return g_loss
 
 
@@ -50,10 +50,9 @@ def main():
     loss_D = HingeLossD()
 
     G = FastGanGenerator(resolution).to(device)
-    projection = ProjectionModel(resolution).to(device)
-    D = MultiScaleDiscriminator(projection.channels).to(device)
+    P = ProjectionModel(resolution).to(device)
+    D = MultiScaleDiscriminator(P.channels).to(device)
 
-    
     optim_D = Adam(D.parameters(), lr)
     optim_G = Adam(G.parameters(), lr)
 
@@ -65,10 +64,10 @@ def main():
         z = torch.randn(batch_size, latent_dim, 1, 1, device=device)
         x_fake = G(z).detach()  # Detach to avoid backpropagation through the generator
 
-        features_fake = projection(x_fake)
+        features_fake = P(x_fake)
         logits_fake = D(features_fake)
 
-        features_real = projection(x_real)
+        features_real = P(x_real)
         logits_real = D(features_real)
 
         # Compute loss for Discriminator
@@ -84,7 +83,7 @@ def main():
         # For the generator training
         z = torch.randn(batch_size, latent_dim, 1, 1, device=device)
         x_fake = G(z)
-        features_fake = projection(x_fake)
+        features_fake = P(x_fake)
         logits_fake = D(features_fake)
 
         total_G_loss = 0.0
