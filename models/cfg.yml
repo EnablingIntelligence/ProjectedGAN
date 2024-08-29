@@ -1,0 +1,17 @@
+general:
+  batch_size: 4
+  num_epochs: 10
+  latent_dim: 256
+  resolution: 256
+
+discriminator:
+  optimizer:
+    beta1: 0.999
+    beta2: 0.5
+    lr: 0.002
+
+generator:
+  optimizer:
+    beta1: 0.999
+    beta2: 0.5
+    lr: 0.002
