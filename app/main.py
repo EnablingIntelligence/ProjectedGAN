@@ -12,7 +12,6 @@ def load_frontend():
 
 @app.get("/rest/generate", response_class=StreamingResponse)
 def generate_image():
-    # TODO generate image
-    # TODO return image
+    # TODO generate image # pylint: disable=fixme
+    # TODO return image # pylint: disable=fixme
     print("Generating image...")
-    pass
