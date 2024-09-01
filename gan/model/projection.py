@@ -1,8 +1,9 @@
 import torch
-from torch import nn
 import torchvision.models as models
-from utils import kaiming_init
-from diffaug import DiffAugment
+from torch import nn
+
+from gan.model import DiffAugment
+from gan.utils import kaiming_init
 
 
 class EfficientNet(nn.Module):
@@ -124,7 +125,6 @@ class ProjectionModel(nn.Module):
         ]
 
     def forward(self, x):
-
         features = self.pretrained_model(x)
 
         feat16 = self.csm320(features[3])
@@ -142,20 +142,3 @@ def print_feat_shape(features):
     for idx in features.keys():
         print(features[idx].shape)
     print()
-
-
-def main():
-    resolution = 256
-    r_sample = torch.randn(1, 3, 256, 256)
-    pretrained_model = EfficientNet(resolution)
-    projection = ProjectionModel(resolution)
-
-    feats = pretrained_model(r_sample)
-    print_feat_shape(feats)
-
-    feats = projection(r_sample)
-    print_feat_shape(feats)
-
-
-if __name__ == "__main__":
-    main()

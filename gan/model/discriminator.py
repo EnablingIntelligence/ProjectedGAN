@@ -1,8 +1,6 @@
-import torch
 import torch.nn as nn
-from utils import Conv2DSN
-from projection import ProjectionModel
-from generator import FastGanGenerator
+
+from gan.utils import Conv2DSN
 
 
 class DownBlock(nn.Module):
@@ -64,25 +62,3 @@ class MultiScaleDiscriminator(nn.Module):
             logits[feat_idx] = logit
 
         return logits
-
-
-def main():
-    Batch_size = 4
-    latent_dim = 256
-    resolution = 256
-
-    G = FastGanGenerator(resolution)
-    projection = ProjectionModel(resolution)
-    D = MultiScaleDiscriminator(projection.channels)
-
-    z = torch.randn(Batch_size, latent_dim, 1, 1)
-    x_fake = G(z)
-    features = projection(x_fake)
-
-    logits = D(features)
-    for idx in logits.keys():
-        print(logits[idx].shape)
-
-
-if __name__ == "__main__":
-    main()

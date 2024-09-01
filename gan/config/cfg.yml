@@ -1,4 +1,8 @@
 general:
+  data_path: '../data'
+  result_path: '../results'
+
+training:
   batch_size: 4
   num_epochs: 10
   latent_dim: 256

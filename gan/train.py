@@ -1,43 +1,20 @@
-"""
-GAN Hinge Loss: https://paperswithcode.com/method/gan-hinge-loss
-"""
+import argparse
+from argparse import Namespace
+from typing import Union
 
 import torch
-from torch import nn
-import torch.nn.functional as F
 from torch.optim import Adam
 
-import numpy as np
-from generator import FastGanGenerator
-from discriminator import MultiScaleDiscriminator
-from projection import ProjectionModel
-
-import warnings
-
-warnings.simplefilter("ignore", UserWarning)
+from gan.config import load_config
+from gan.model import FastGanGenerator, MultiScaleDiscriminator, ProjectionModel
+from gan.utils import HingeLossG, HingeLossD
 
 
-class HingeLossD(nn.Module):
-    def __init__(self):
-        super().__init__()
+def train(args: Union[Namespace, dict]):
+    config = load_config(args.config)
+    print(config)
 
-    def forward(self, real_logits, fake_logits):
-        real_loss = torch.mean(F.relu(1.0 - real_logits))
-        fake_loss = torch.mean(F.relu(1.0 + fake_logits)) 
-        d_loss = real_loss + fake_loss
-        return d_loss
-
-
-class HingeLossG(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, fake_logits):
-        g_loss = -torch.mean(fake_logits)
-        return g_loss
-
-
-def main():
+    # TODO remove code below
     C = 3
     batch_size = 4
     latent_dim = 256
@@ -45,7 +22,7 @@ def main():
     lr = 0.0002
     num_epochs = 1
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    
+
     loss_G = HingeLossG()
     loss_D = HingeLossD()
 
@@ -99,5 +76,8 @@ def main():
         print(f"Epoch {epoch} - GLoss: {total_G_loss.cpu().detach().numpy():.03f}")
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Arguments for training the Projected GAN")
+    parser.add_argument("--config", type=str, default="./config/cfg.yml", help="Path to the config file")
+    args = parser.parse_args()
+    train(args)

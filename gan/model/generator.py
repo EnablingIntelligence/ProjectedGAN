@@ -5,9 +5,11 @@ ProjGan: https://arxiv.org/pdf/2111.01007
 
 import torch
 import torch.nn as nn
-from utils import Conv2DSN, ConvTranspose2DSN
+
+from gan.utils import Conv2DSN, ConvTranspose2DSN
 
 
+# TODO replace by nn.GLU(1)
 class GLU(nn.Module):
     """
     Equivalent to nn.GLU(1)
@@ -124,14 +126,3 @@ class FastGanGenerator(nn.Module):
 
         feat = self.last_layer(feat)
         return feat
-
-
-def main():
-    z = torch.randn(1, 256, 1, 1)
-    G = FastGanGenerator(resolution=256)
-    x_fake = G(z)
-    print(x_fake.shape)
-
-
-if __name__ == "__main__":
-    main()
