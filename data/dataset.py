@@ -4,7 +4,7 @@ import os
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
-from torchvision.transforms import ToTensor
+from torchvision.transforms import PILToTensor
 
 
 class CustomDataset(Dataset):
@@ -19,4 +19,4 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx) -> torch.Tensor:
         img_path = self.img_paths[idx]
         img = Image.open(img_path)
-        return ToTensor()(img)
+        return PILToTensor()(img)

@@ -9,17 +9,6 @@ import torch.nn as nn
 from gan.utils import Conv2DSN, ConvTranspose2DSN
 
 
-# TODO replace by nn.GLU(1)
-class GLU(nn.Module):
-    """
-    Equivalent to nn.GLU(1)
-    """
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        ch_split = x.shape[1] // 2
-        return x[:, :ch_split] * torch.sigmoid(x[:, ch_split:])
-
-
 class UpSampling(nn.Module):
     def __init__(self, in_ch: int, out_ch: int) -> None:
         super().__init__()
@@ -28,7 +17,7 @@ class UpSampling(nn.Module):
             nn.Upsample(scale_factor=2, mode="nearest"),
             Conv2DSN(in_ch, out_ch * 2, 3, 1, 1, bias=False),
             nn.BatchNorm2d(out_ch * 2),
-            GLU(),
+            nn.GLU(1),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -41,7 +30,7 @@ class InputLayer(nn.Module):
         self.model = nn.Sequential(
             ConvTranspose2DSN(in_ch, out_ch * 2, 4, 1, 0, bias=False),
             nn.BatchNorm2d(out_ch * 2),
-            GLU(),
+            nn.GLU(1),
         )
 
     def forward(self, z: torch.Tensor) -> torch.Tensor:
