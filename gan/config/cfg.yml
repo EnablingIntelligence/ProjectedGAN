@@ -7,6 +7,12 @@ training:
   num_epochs: 10
   latent_dim: 256
   resolution: 256
+  num_workers: 1
+  num_channels: 3
+
+  logging:
+    interval: 2
+    batch_size: 4
 
 discriminator:
   optimizer:
@@ -15,6 +21,8 @@ discriminator:
     lr: 0.002
 
 generator:
+  ngf: 64
+  z_dim: 256
   optimizer:
     beta1: 0.999
     beta2: 0.5
