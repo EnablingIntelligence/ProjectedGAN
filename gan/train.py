@@ -6,6 +6,7 @@ from typing import Union
 
 import torch
 from torch.optim import Adam
+from torchvision.utils import make_grid
 from torch.utils.tensorboard import SummaryWriter
 
 from data import get_data_loader
@@ -125,9 +126,11 @@ def train(args: Union[Namespace, dict]):
             n_epoch += 1
 
         if epoch % train_cfg.logging.interval == 0:
+            
             # gen images
             fake_images = G(z_benchmark)
-            writer.add_images(tag="GenIamge", img_tensor=fake_images, global_step=epoch)
+            image_grid = make_grid(fake_images, normalize=True)
+            writer.add_image(tag="GenIamge", img_tensor=image_grid, global_step=epoch)
 
         print(f"Epoch {epoch} - DLoss: {total_D_loss.cpu().detach().numpy():.03f}")
         print(f"Epoch {epoch} - GLoss: {total_G_loss.cpu().detach().numpy():.03f}")

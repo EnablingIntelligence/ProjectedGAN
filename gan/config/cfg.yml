@@ -12,7 +12,7 @@ training:
   num_channels: 3
 
   logging:
-    interval: 2
+    interval: 1
     batch_size: 4
 
 discriminator:
