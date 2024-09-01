@@ -11,7 +11,7 @@ from gan.utils import HingeLossG, HingeLossD
 from gan.model import FastGanGenerator, MultiScaleDiscriminator, ProjectionModel
 
 from torch.utils.tensorboard import SummaryWriter
-
+import os
 
 def train(args: Union[Namespace, dict]):
     config = load_config(args.config)
@@ -25,9 +25,10 @@ def train(args: Union[Namespace, dict]):
 
     dataloader = get_data_loader(
         data_path=config.general.data_path,
-        batch_size=config.training.batch_size,
-        num_workers=config.traning.num_workers,
+        batch_size=train_cfg.batch_size,
+        num_workers=train_cfg.num_workers,
         device=device,
+        resolution=train_cfg.resolution,
         img_file_type=config.general.img_file_type,
     )
 
@@ -133,7 +134,7 @@ if __name__ == "__main__":
         description="Arguments for training the Projected GAN"
     )
     parser.add_argument(
-        "--config", type=str, default="./config/cfg.yml", help="Path to the config file"
+        "--config", type=str, default="./gan/config/cfg.yml", help="Path to the config file"
     )
     args = parser.parse_args()
     train(args)

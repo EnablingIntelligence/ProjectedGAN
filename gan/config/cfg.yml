@@ -1,7 +1,7 @@
 general:
   img_file_type: 'jpg'
-  data_path: '../data'
-  result_path: '../results'
+  data_path: './data'
+  result_path: './results'
 
 training:
   batch_size: 4

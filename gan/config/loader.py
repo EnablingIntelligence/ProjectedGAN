@@ -1,8 +1,5 @@
 import yaml
+from omegaconf import OmegaConf
 
-
-def load_config(path: str) -> dict:
-    with open(path, 'r') as file:
-        config = yaml.safe_load(file)
-
-    return config
+def load_config(path: str) -> OmegaConf:
+    return OmegaConf.load(path)

@@ -2,3 +2,7 @@
 .vscode
 
 data/pokemon
+
+results
+
+**/*.pyc

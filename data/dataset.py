@@ -4,12 +4,14 @@ import os
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
-from torchvision.transforms import PILToTensor, Compose, Normalize
+from torchvision.transforms import PILToTensor, Compose, Normalize, ToTensor, Resize
 
 
 class CustomDataset(Dataset):
 
-    def __init__(self, data_path: str, device: torch.device, img_file_type: str = "jpg"):
+    def __init__(
+        self, data_path: str, device: torch.device, resolution: int, img_file_type: str = "jpg"
+    ):
         self.device = device
         self.data_path = data_path
         self.img_paths = glob.glob(
@@ -17,7 +19,11 @@ class CustomDataset(Dataset):
         )
 
         self.transform = Compose(
-            [PILToTensor(), Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))]
+            [
+                Resize(resolution),
+                ToTensor(),
+                Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
+            ]
         )
 
     def __len__(self):
