@@ -1,4 +1,5 @@
 general:
+  img_file_type: 'jpg'
   data_path: '../data'
   result_path: '../results'
 

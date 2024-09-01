@@ -28,6 +28,7 @@ def train(args: Union[Namespace, dict]):
         batch_size=config.training.batch_size,
         num_workers=config.traning.num_workers,
         device=device,
+        img_file_type=config.general.img_file_type,
     )
 
     G = FastGanGenerator(
@@ -59,7 +60,7 @@ def train(args: Union[Namespace, dict]):
     z_benchmark = torch.randn(
         train_cfg.logging.batch_size, train_cfg.latent_dim, 1, 1, device=device
     )
-    
+
     n_epoch = 1
     for epoch in range(1, train_cfg.num_epochs + 1):
         for real_images in dataloader:
@@ -105,16 +106,23 @@ def train(args: Union[Namespace, dict]):
             total_G_loss.backward()
             optim_G.step()
 
-            writer.add_scalar(tag="DiscriminatorLoss", scalar_value=total_D_loss.cpu().item(), global_step=n_epoch)
-            writer.add_scalar(tag="GeneratorLoss", scalar_value=total_G_loss.cpu().item(), global_step=n_epoch)
-            
+            writer.add_scalar(
+                tag="DiscriminatorLoss",
+                scalar_value=total_D_loss.cpu().item(),
+                global_step=n_epoch,
+            )
+            writer.add_scalar(
+                tag="GeneratorLoss",
+                scalar_value=total_G_loss.cpu().item(),
+                global_step=n_epoch,
+            )
+
             n_epoch += 1
 
         if epoch % train_cfg.logging.interval == 0:
             # gen images
             fake_images = G(z_benchmark)
             writer.add_images(tag="GenIamge", img_tensor=fake_images, global_step=epoch)
-            
 
         print(f"Epoch {epoch} - DLoss: {total_D_loss.cpu().detach().numpy():.03f}")
         print(f"Epoch {epoch} - GLoss: {total_G_loss.cpu().detach().numpy():.03f}")

@@ -9,11 +9,11 @@ from torchvision.transforms import PILToTensor, Compose, Normalize
 
 class CustomDataset(Dataset):
 
-    def __init__(self, data_path: str, device: torch.device):
+    def __init__(self, data_path: str, device: torch.device, img_file_type: str = "jpg"):
         self.device = device
         self.data_path = data_path
         self.img_paths = glob.glob(
-            os.path.join(data_path, "**", "*.jpg"), recursive=True
+            os.path.join(data_path, "**", f"*.{img_file_type}"), recursive=True
         )
 
         self.transform = Compose(
