@@ -38,10 +38,10 @@ class Discriminator(nn.Module):
 
 
 class MultiScaleDiscriminator(nn.Module):
-    def __init__(self, input_channels, level_channels=[64, 128, 256, 512]):
+    def __init__(self, feature_channels: list[int], level_channels=[64, 128, 256, 512]):
         """
         MultiDiscriminator builds and holds multiple discriminators.
-        input_channels (list of int): List of input channels for each Discriminator.
+        feature_channels (list of int): List of feature channels for each Discriminator.
         level_channels (list of int): List of levels channels for each Discriminator.
         """
         super().__init__()
@@ -49,8 +49,8 @@ class MultiScaleDiscriminator(nn.Module):
 
         self.discriminators = nn.ModuleList(
             [
-                Discriminator(input_channels[i], levels[i])
-                for i in range(len(input_channels))
+                Discriminator(feature_channels[i], levels[i])
+                for i in range(len(feature_channels))
             ]
         )
 
