@@ -4,13 +4,13 @@ import os
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
-from torchvision.transforms import PILToTensor, Compose, Normalize, ToTensor, Resize
+from torchvision.transforms import Compose, Normalize, ToTensor, Resize
 
 
 class CustomDataset(Dataset):
 
     def __init__(
-        self, data_path: str, device: torch.device, resolution: int, img_file_type: str = "jpg"
+            self, data_path: str, device: str, resolution: int, img_file_type: str = "jpg"
     ):
         self.device = device
         self.data_path = data_path

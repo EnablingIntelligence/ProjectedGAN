@@ -1,22 +1,26 @@
 import argparse
+import os
+import time
 from argparse import Namespace
 from typing import Union
 
 import torch
 from torch.optim import Adam
+from torch.utils.tensorboard import SummaryWriter
 
 from data import get_data_loader
 from gan.config import load_config
-from gan.utils import HingeLossG, HingeLossD
 from gan.model import FastGanGenerator, MultiScaleDiscriminator, ProjectionModel
+from gan.utils import HingeLossG, HingeLossD
 
-from torch.utils.tensorboard import SummaryWriter
-import os
 
 def train(args: Union[Namespace, dict]):
     config = load_config(args.config)
 
-    writer = SummaryWriter(config.general.result_path)
+    current_time_in_millis = int(round(time.time() * 1000))
+    run_id = f"gan_run_{current_time_in_millis}"
+
+    writer = SummaryWriter(os.path.join(config.general.result_path, run_id))
 
     G_cfg = config.generator
     D_cfg = config.discriminator
@@ -81,7 +85,7 @@ def train(args: Union[Namespace, dict]):
             # Compute loss for Discriminator
             total_D_loss = 0.0
             for logit_real, logit_fake in zip(
-                logits_real.values(), logits_fake.values()
+                    logits_real.values(), logits_fake.values()
             ):
                 loss_disc = loss_D(logit_real, logit_fake)
                 total_D_loss += loss_disc
