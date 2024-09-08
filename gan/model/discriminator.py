@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 from gan.utils import Conv2DSN
@@ -16,6 +17,17 @@ class DownBlock(nn.Module):
         return self.model(x)
 
 
+class MinibatchStdLayer(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self, x: torch.Tensor) -> torch.Tensor:
+        (B, _, H, W) = x.size()
+        std = torch.std(x, dim=0, keepdim=True)
+        mean_std = torch.mean(std).expand((B, 1, H, W))
+        return torch.cat([x, mean_std], dim=1)
+
+
 class Discriminator(nn.Module):
     def __init__(self, in_channels, levels):
         """
@@ -29,7 +41,8 @@ class Discriminator(nn.Module):
             layers.append(DownBlock(in_channels, out_channels))
             in_channels = out_channels
 
-        layers.append(Conv2DSN(in_channels, 1, kernel_size=4, stride=1, padding=0))
+        layers.append(MinibatchStdLayer())
+        layers.append(Conv2DSN(in_channels + 1, 1, kernel_size=4, stride=1, padding=0))
 
         self.model = nn.Sequential(*layers)
 
