@@ -35,7 +35,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/EnablingIntelligence/ProjectedGAN:latest
+          tags: ghcr.io/EnablingIntelligence/projected-gan:latest
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Delete old images
@@ -43,6 +43,6 @@ jobs:
         with:
           user: ${{ github.actor }}
           token: ${{ secrets.PAT_TOKEN }}
-          container: ProjectedGAN
+          container: projected-gan
           keep-last: 1
           untagged: true
