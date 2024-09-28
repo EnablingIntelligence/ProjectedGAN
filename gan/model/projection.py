@@ -1,5 +1,5 @@
 import torch
-import torchvision.models as models
+from torchvision import models
 from torch import nn
 
 from gan.model import DiffAugment
@@ -72,7 +72,7 @@ class RandomProjection(nn.Module):
     """
 
     def __init__(self, in_ch, out_ch):
-        super(RandomProjection, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(in_ch, in_ch, 3, 1, 1)
         self.conv2 = nn.Conv2d(in_ch, out_ch, 3, 1, 1)
         self.freeze_parameters()

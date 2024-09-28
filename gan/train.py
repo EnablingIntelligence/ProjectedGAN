@@ -15,16 +15,16 @@ from gan.model import FastGanGenerator, MultiScaleDiscriminator, ProjectionModel
 from gan.utils import HingeLossG, HingeLossD
 
 
-def train(args: Union[Namespace, dict]):
-    config = load_config(args.config)
+def train(train_args: Union[Namespace, dict]):
+    config = load_config(train_args.config)
 
     current_time_in_millis = int(round(time.time() * 1000))
     run_id = f"gan_run_{current_time_in_millis}"
 
     writer = SummaryWriter(os.path.join(config.general.result_path, run_id))
 
-    G_cfg = config.generator
-    D_cfg = config.discriminator
+    g_cfg = config.generator
+    d_cfg = config.discriminator
     train_cfg = config.training
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -37,31 +37,33 @@ def train(args: Union[Namespace, dict]):
         img_file_type=config.general.img_file_type,
     )
 
-    G = FastGanGenerator(
-        ngf=G_cfg.ngf,
-        z_dim=G_cfg.z_dim,
+    generator = FastGanGenerator(
+        ngf=g_cfg.ngf,
+        z_dim=g_cfg.z_dim,
         out_ch=train_cfg.num_channels,
         resolution=train_cfg.resolution,
     ).to(device)
 
-    P = ProjectionModel(resolution=train_cfg.resolution).to(device)
+    projection = ProjectionModel(resolution=train_cfg.resolution).to(device)
 
-    D = MultiScaleDiscriminator(feature_channels=P.channels).to(device)
-
-    optim_D = Adam(
-        params=D.parameters(),
-        lr=D_cfg.optimizer.lr,
-        betas=(D_cfg.optimizer.beta1, D_cfg.optimizer.beta2),
+    discriminator = MultiScaleDiscriminator(feature_channels=projection.channels).to(
+        device
     )
 
-    optim_G = Adam(
-        params=G.parameters(),
-        lr=G_cfg.optimizer.lr,
-        betas=(G_cfg.optimizer.beta1, G_cfg.optimizer.beta2),
+    optim_d = Adam(
+        params=discriminator.parameters(),
+        lr=d_cfg.optimizer.lr,
+        betas=(d_cfg.optimizer.beta1, d_cfg.optimizer.beta2),
     )
 
-    loss_G = HingeLossG()
-    loss_D = HingeLossD()
+    optim_g = Adam(
+        params=generator.parameters(),
+        lr=g_cfg.optimizer.lr,
+        betas=(g_cfg.optimizer.beta1, g_cfg.optimizer.beta2),
+    )
+
+    loss_g = HingeLossG()
+    loss_d = HingeLossD()
 
     z_benchmark = torch.randn(
         train_cfg.logging.batch_size, train_cfg.latent_dim, 1, 1, device=device
@@ -75,65 +77,64 @@ def train(args: Union[Namespace, dict]):
                 train_cfg.batch_size, train_cfg.latent_dim, 1, 1, device=device
             )
             # Detach to avoid backpropagation through the generator
-            fake_images = G(z).detach()
+            fake_images = generator(z).detach()
 
-            features_fake = P(fake_images)
-            logits_fake = D(features_fake)
+            features_fake = projection(fake_images)
+            logits_fake = discriminator(features_fake)
 
-            features_real = P(real_images)
-            logits_real = D(features_real)
+            features_real = projection(real_images)
+            logits_real = discriminator(features_real)
 
             # Compute loss for Discriminator
-            total_D_loss = 0.0
+            total_d_loss = 0.0
             for logit_real, logit_fake in zip(
-                    logits_real.values(), logits_fake.values()
+                logits_real.values(), logits_fake.values()
             ):
-                loss_disc = loss_D(logit_real, logit_fake)
-                total_D_loss += loss_disc
+                loss_disc = loss_d(logit_real, logit_fake)
+                total_d_loss += loss_disc
 
-            optim_D.zero_grad()
-            total_D_loss.backward()
-            optim_D.step()
+            optim_d.zero_grad()
+            total_d_loss.backward()
+            optim_d.step()
 
             # For the generator training
             z = torch.randn(
                 train_cfg.batch_size, train_cfg.latent_dim, 1, 1, device=device
             )
-            fake_images = G(z)
-            features_fake = P(fake_images)
-            logits_fake = D(features_fake)
+            fake_images = generator(z)
+            features_fake = projection(fake_images)
+            logits_fake = discriminator(features_fake)
 
-            total_G_loss = 0.0
+            total_g_loss = 0.0
             for logit in logits_fake.values():
-                loss_gen = loss_G(logit)
-                total_G_loss += loss_gen
+                loss_gen = loss_g(logit)
+                total_g_loss += loss_gen
 
-            optim_G.zero_grad()
-            total_G_loss.backward()
-            optim_G.step()
+            optim_g.zero_grad()
+            total_g_loss.backward()
+            optim_g.step()
 
             writer.add_scalar(
                 tag="DiscriminatorLoss",
-                scalar_value=total_D_loss.cpu().item(),
+                scalar_value=total_d_loss.cpu().item(),
                 global_step=n_epoch,
             )
             writer.add_scalar(
                 tag="GeneratorLoss",
-                scalar_value=total_G_loss.cpu().item(),
+                scalar_value=total_g_loss.cpu().item(),
                 global_step=n_epoch,
             )
 
             n_epoch += 1
 
         if epoch % train_cfg.logging.interval == 0:
-            
             # gen images
-            fake_images = G(z_benchmark)
+            fake_images = generator(z_benchmark)
             image_grid = make_grid(fake_images, normalize=True)
             writer.add_image(tag="GenIamge", img_tensor=image_grid, global_step=epoch)
 
-        print(f"Epoch {epoch} - DLoss: {total_D_loss.cpu().detach().numpy():.03f}")
-        print(f"Epoch {epoch} - GLoss: {total_G_loss.cpu().detach().numpy():.03f}")
+        print(f"Epoch {epoch} - DLoss: {total_d_loss.cpu().detach().numpy():.03f}")
+        print(f"Epoch {epoch} - GLoss: {total_g_loss.cpu().detach().numpy():.03f}")
 
 
 if __name__ == "__main__":
@@ -141,7 +142,10 @@ if __name__ == "__main__":
         description="Arguments for training the Projected GAN"
     )
     parser.add_argument(
-        "--config", type=str, default="./gan/config/cfg.yml", help="Path to the config file"
+        "--config",
+        type=str,
+        default="./gan/config/cfg.yml",
+        help="Path to the config file",
     )
     args = parser.parse_args()
     train(args)
