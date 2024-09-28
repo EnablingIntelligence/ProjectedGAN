@@ -6,10 +6,11 @@ from typing import Union
 
 import torch
 from torch.optim import Adam
-from torchvision.utils import make_grid
 from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import DataLoader
+from torchvision.utils import make_grid
 
-from data import get_data_loader
+from data import CustomDataset
 from gan.config import load_config
 from gan.model import FastGanGenerator, MultiScaleDiscriminator, ProjectionModel
 from gan.utils import HingeLossG, HingeLossD
@@ -28,13 +29,18 @@ def train(train_args: Union[Namespace, dict]):
     train_cfg = config.training
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    dataloader = get_data_loader(
+    dataset = CustomDataset(
         data_path=config.general.data_path,
-        batch_size=train_cfg.batch_size,
-        num_workers=train_cfg.num_workers,
         device=device,
         resolution=train_cfg.resolution,
         img_file_type=config.general.img_file_type,
+    )
+
+    dataloader = DataLoader(
+        dataset=dataset,
+        batch_size=train_cfg.batch_size,
+        shuffle=True,
+        num_workers=train_cfg.num_workers,
     )
 
     generator = FastGanGenerator(

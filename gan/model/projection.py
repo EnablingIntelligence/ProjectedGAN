@@ -2,7 +2,7 @@ import torch
 from torchvision import models
 from torch import nn
 
-from gan.model import DiffAugment
+from gan.model import diff_augment
 from gan.utils import kaiming_init
 
 
@@ -54,7 +54,7 @@ class EfficientNet(nn.Module):
     def forward(self, x):
         features = {}
 
-        x = DiffAugment(x, policy="color,translation,cutout")
+        x = diff_augment(x, policy="color,translation,cutout")
 
         input_tensor = x
 

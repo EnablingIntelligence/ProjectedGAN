@@ -86,6 +86,11 @@ class FastGanGenerator(nn.Module):
             256: UpSampling(self.nfc[128], self.nfc[256]),
         }
 
+        self.sle_layers = {
+            128: SkipLayerExcitation(in_ch=self.nfc[8], out_ch=self.nfc[128]),
+            256: SkipLayerExcitation(in_ch=self.nfc[16], out_ch=self.nfc[256]),
+        }
+
         self.sle128 = SkipLayerExcitation(in_ch=self.nfc[8], out_ch=self.nfc[128])
         self.sle256 = SkipLayerExcitation(in_ch=self.nfc[16], out_ch=self.nfc[256])
 
@@ -106,11 +111,11 @@ class FastGanGenerator(nn.Module):
         feat32 = self.feat_layers[32](feat16)
         feat64 = self.feat_layers[64](feat32)
         feat128 = self.feat_layers[128](feat64)
-        feat128 = self.sle128(feat128, feat8)
+        feat128 = self.sle_layers[128](feat128, feat8)
 
         if self.resolution > 128:
             feat256 = self.feat256(feat128)
-            feat = self.sle256(feat256, feat16)
+            feat = self.sle_layers[256](feat256, feat16)
         else:
             feat = feat128
 
