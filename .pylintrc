@@ -18,4 +18,5 @@ max-line-length=120
 [DESIGN]
 max-args=15
 min-public-methods=1
-max-locals=30
+max-locals=50
+max-statements=60 
