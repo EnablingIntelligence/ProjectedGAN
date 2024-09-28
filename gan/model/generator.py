@@ -91,9 +91,6 @@ class FastGanGenerator(nn.Module):
             256: SkipLayerExcitation(in_ch=self.nfc[16], out_ch=self.nfc[256]),
         }
 
-        self.sle128 = SkipLayerExcitation(in_ch=self.nfc[8], out_ch=self.nfc[128])
-        self.sle256 = SkipLayerExcitation(in_ch=self.nfc[16], out_ch=self.nfc[256])
-
         self.last_layer = nn.Sequential(
             nn.Conv2d(self.layer_layer_ch, out_ch, 3, 1, 1),
             nn.Tanh(),
