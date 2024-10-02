@@ -16,8 +16,8 @@ from gan.model import FastGanGenerator, MultiScaleDiscriminator, ProjectionModel
 from gan.utils import HingeLossG, HingeLossD
 
 
-def train(args: Union[Namespace, dict]):
-    config = load_config(args.config)
+def train(train_args: Union[Namespace, dict]):
+    config = load_config(train_args.config)
     general_cfg = config.general
 
     current_time_in_millis = int(round(time.time() * 1000))

@@ -10,7 +10,7 @@ def kaiming_init(module: nn.Module):
 
 
 def weights_init(module: nn.Module):
-    if isinstance(module, nn.Conv2d) or isinstance(module, nn.ConvTranspose2d):
+    if isinstance(module, (nn.Conv2d, nn.ConvTranspose2d)):
         module.weight.data.normal_(0.0, 0.02)
     elif isinstance(module, nn.BatchNorm2d):
         module.weight.data.normal_(1.0, 0.02)
