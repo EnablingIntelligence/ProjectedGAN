@@ -6,12 +6,11 @@ from typing import Union
 
 import torch
 from torch.optim import Adam
-from torchvision.utils import make_grid
-from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 from torchvision.utils import make_grid
 
-from data import get_data_loader
+from data import CustomDataset
 from gan.config import load_config
 from gan.model import FastGanGenerator, MultiScaleDiscriminator, ProjectionModel
 from gan.utils import HingeLossG, HingeLossD
@@ -32,13 +31,18 @@ def train(args: Union[Namespace, dict]):
     train_cfg = config.training
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    dataloader = get_data_loader(
+    dataset = CustomDataset(
         data_path=general_cfg.data_path,
-        batch_size=train_cfg.batch_size,
-        num_workers=train_cfg.num_workers,
         device=device,
         resolution=train_cfg.resolution,
         img_file_type=general_cfg.img_file_type,
+    )
+
+    dataloader = DataLoader(
+        dataset=dataset,
+        batch_size=train_cfg.batch_size,
+        shuffle=True,
+        num_workers=train_cfg.num_workers,
     )
 
     generator = FastGanGenerator(
@@ -58,8 +62,8 @@ def train(args: Union[Namespace, dict]):
 
     if checkpoint_cfg.load_checkpoint:
         print("Loading checkpoints")
-        G.load(checkpoint_cfg.generator_path)
-        D.load(checkpoint_cfg.discriminator_path)
+        generator.load(checkpoint_cfg.generator_path)
+        discriminator.load(checkpoint_cfg.discriminator_path)
 
     optim_d = Adam(
         params=discriminator.parameters(),
@@ -77,7 +81,7 @@ def train(args: Union[Namespace, dict]):
     loss_d = HingeLossD()
 
     z_benchmark = torch.randn(
-        train_cfg.logging.batch_size, G_cfg.z_dim, 1, 1, device=device
+        train_cfg.logging.batch_size, g_cfg.z_dim, 1, 1, device=device
     )
 
     n_epoch = 1
@@ -86,7 +90,7 @@ def train(args: Union[Namespace, dict]):
             real_images = real_images.to(device)
             # Discriminator training
             z = torch.randn(
-                train_cfg.batch_size, G_cfg.z_dim, 1, 1, device=device
+                train_cfg.batch_size, g_cfg.z_dim, 1, 1, device=device
             )
             # Detach to avoid backpropagation through the generator
             fake_images = generator(z).detach()
@@ -100,19 +104,19 @@ def train(args: Union[Namespace, dict]):
             # Compute loss for Discriminator
             total_d_loss = 0.0
             for logit_real, logit_fake in zip(
-                logits_real.values(), logits_fake.values()
+                    logits_real.values(), logits_fake.values()
             ):
                 loss_disc = loss_d(logit_real, logit_fake)
                 total_d_loss += loss_disc
 
-            optim_D.zero_grad()
-            total_D_loss.backward()
-            torch.nn.utils.clip_grad_norm_(D.parameters(), 10.0)
-            optim_D.step()
+            optim_d.zero_grad()
+            total_d_loss.backward()
+            torch.nn.utils.clip_grad_norm_(discriminator.parameters(), 10.0)
+            optim_d.step()
 
             # For the generator training
             z = torch.randn(
-                train_cfg.batch_size, G_cfg.z_dim, 1, 1, device=device
+                train_cfg.batch_size, g_cfg.z_dim, 1, 1, device=device
             )
             fake_images = generator(z)
             features_fake = projection(fake_images)
@@ -123,10 +127,10 @@ def train(args: Union[Namespace, dict]):
                 loss_gen = loss_g(logit)
                 total_g_loss += loss_gen
 
-            optim_G.zero_grad()
-            total_G_loss.backward()
-            torch.nn.utils.clip_grad_norm_(G.parameters(), 10.0)
-            optim_G.step()
+            optim_g.zero_grad()
+            total_g_loss.backward()
+            torch.nn.utils.clip_grad_norm_(generator.parameters(), 10.0)
+            optim_g.step()
 
             writer.add_scalar(
                 tag="DiscriminatorLoss",
@@ -142,17 +146,17 @@ def train(args: Union[Namespace, dict]):
             n_epoch += 1
 
         if epoch % train_cfg.logging.interval == 0:
-            fake_images = G(z_benchmark)
+            fake_images = generator(z_benchmark)
             image_grid = make_grid(fake_images, normalize=True)
             writer.add_image(tag="GenIamge", img_tensor=image_grid, global_step=epoch)
 
         if epoch % train_cfg.checkpoint.interval == 0:
             current_time_in_millis = int(round(time.time() * 1000))
-            G.save(os.path.join(run_path, f"G_{current_time_in_millis}.pth"))
-            D.save(os.path.join(run_path, f"D_{current_time_in_millis}.pth"))
+            generator.save(os.path.join(run_path, f"G_{current_time_in_millis}.pth"))
+            discriminator.save(os.path.join(run_path, f"D_{current_time_in_millis}.pth"))
 
-        print(f"Epoch {epoch} - DLoss: {total_D_loss.cpu().detach().numpy():.03f}")
-        print(f"Epoch {epoch} - GLoss: {total_G_loss.cpu().detach().numpy():.03f}")
+        print(f"Epoch {epoch} - DLoss: {total_d_loss.cpu().detach().numpy():.03f}")
+        print(f"Epoch {epoch} - GLoss: {total_g_loss.cpu().detach().numpy():.03f}")
 
 
 if __name__ == "__main__":
