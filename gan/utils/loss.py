@@ -8,9 +8,6 @@ from torch import nn
 
 
 class HingeLossD(nn.Module):
-    def __init__(self):
-        super().__init__()
-
     def forward(self, real_logits, fake_logits):
         real_loss = torch.mean(F.relu(1.0 - real_logits))
         fake_loss = torch.mean(F.relu(1.0 + fake_logits))
@@ -19,8 +16,5 @@ class HingeLossD(nn.Module):
 
 
 class HingeLossG(nn.Module):
-    def __init__(self):
-        super().__init__()
-
     def forward(self, fake_logits):
         return -torch.mean(fake_logits)

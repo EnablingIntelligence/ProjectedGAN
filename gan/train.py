@@ -8,6 +8,8 @@ import torch
 from torch.optim import Adam
 from torchvision.utils import make_grid
 from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import DataLoader
+from torchvision.utils import make_grid
 
 from data import get_data_loader
 from gan.config import load_config
@@ -25,8 +27,8 @@ def train(args: Union[Namespace, dict]):
     run_path = os.path.join(general_cfg.result_path, run_id)
     writer = SummaryWriter(run_path)
 
-    G_cfg = config.generator
-    D_cfg = config.discriminator
+    g_cfg = config.generator
+    d_cfg = config.discriminator
     train_cfg = config.training
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -39,16 +41,18 @@ def train(args: Union[Namespace, dict]):
         img_file_type=general_cfg.img_file_type,
     )
 
-    G = FastGanGenerator(
-        ngf=G_cfg.ngf,
-        z_dim=G_cfg.z_dim,
+    generator = FastGanGenerator(
+        ngf=g_cfg.ngf,
+        z_dim=g_cfg.z_dim,
         out_ch=train_cfg.num_channels,
         resolution=train_cfg.resolution,
     ).to(device)
 
-    P = ProjectionModel(resolution=train_cfg.resolution).to(device)
+    projection = ProjectionModel(resolution=train_cfg.resolution).to(device)
 
-    D = MultiScaleDiscriminator(feature_channels=P.channels).to(device)
+    discriminator = MultiScaleDiscriminator(feature_channels=projection.channels).to(
+        device
+    )
 
     checkpoint_cfg = general_cfg.checkpoint
 
@@ -57,20 +61,20 @@ def train(args: Union[Namespace, dict]):
         G.load(checkpoint_cfg.generator_path)
         D.load(checkpoint_cfg.discriminator_path)
 
-    optim_D = Adam(
-        params=D.parameters(),
-        lr=D_cfg.optimizer.lr,
-        betas=(D_cfg.optimizer.beta1, D_cfg.optimizer.beta2),
+    optim_d = Adam(
+        params=discriminator.parameters(),
+        lr=d_cfg.optimizer.lr,
+        betas=(d_cfg.optimizer.beta1, d_cfg.optimizer.beta2),
     )
 
-    optim_G = Adam(
-        params=G.parameters(),
-        lr=G_cfg.optimizer.lr,
-        betas=(G_cfg.optimizer.beta1, G_cfg.optimizer.beta2),
+    optim_g = Adam(
+        params=generator.parameters(),
+        lr=g_cfg.optimizer.lr,
+        betas=(g_cfg.optimizer.beta1, g_cfg.optimizer.beta2),
     )
 
-    loss_G = HingeLossG()
-    loss_D = HingeLossD()
+    loss_g = HingeLossG()
+    loss_d = HingeLossD()
 
     z_benchmark = torch.randn(
         train_cfg.logging.batch_size, G_cfg.z_dim, 1, 1, device=device
@@ -85,21 +89,21 @@ def train(args: Union[Namespace, dict]):
                 train_cfg.batch_size, G_cfg.z_dim, 1, 1, device=device
             )
             # Detach to avoid backpropagation through the generator
-            fake_images = G(z).detach()
+            fake_images = generator(z).detach()
 
-            features_fake = P(fake_images)
-            logits_fake = D(features_fake)
+            features_fake = projection(fake_images)
+            logits_fake = discriminator(features_fake)
 
-            features_real = P(real_images)
-            logits_real = D(features_real)
+            features_real = projection(real_images)
+            logits_real = discriminator(features_real)
 
             # Compute loss for Discriminator
-            total_D_loss = 0.0
+            total_d_loss = 0.0
             for logit_real, logit_fake in zip(
-                    logits_real.values(), logits_fake.values()
+                logits_real.values(), logits_fake.values()
             ):
-                loss_disc = loss_D(logit_real, logit_fake)
-                total_D_loss += loss_disc
+                loss_disc = loss_d(logit_real, logit_fake)
+                total_d_loss += loss_disc
 
             optim_D.zero_grad()
             total_D_loss.backward()
@@ -110,14 +114,14 @@ def train(args: Union[Namespace, dict]):
             z = torch.randn(
                 train_cfg.batch_size, G_cfg.z_dim, 1, 1, device=device
             )
-            fake_images = G(z)
-            features_fake = P(fake_images)
-            logits_fake = D(features_fake)
+            fake_images = generator(z)
+            features_fake = projection(fake_images)
+            logits_fake = discriminator(features_fake)
 
-            total_G_loss = 0.0
+            total_g_loss = 0.0
             for logit in logits_fake.values():
-                loss_gen = loss_G(logit)
-                total_G_loss += loss_gen
+                loss_gen = loss_g(logit)
+                total_g_loss += loss_gen
 
             optim_G.zero_grad()
             total_G_loss.backward()
@@ -126,12 +130,12 @@ def train(args: Union[Namespace, dict]):
 
             writer.add_scalar(
                 tag="DiscriminatorLoss",
-                scalar_value=total_D_loss.cpu().item(),
+                scalar_value=total_d_loss.cpu().item(),
                 global_step=n_epoch,
             )
             writer.add_scalar(
                 tag="GeneratorLoss",
-                scalar_value=total_G_loss.cpu().item(),
+                scalar_value=total_g_loss.cpu().item(),
                 global_step=n_epoch,
             )
 

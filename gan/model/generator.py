@@ -4,7 +4,7 @@ ProjGan: https://arxiv.org/pdf/2111.01007
 """
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 from gan.utils import Conv2DSN, ConvTranspose2DSN, weights_init
 
@@ -117,15 +117,19 @@ class FastGanGenerator(nn.Module):
         self.layer_layer_ch = self.nfc[resolution]
 
         self.init = InputLayer(z_dim, self.nfc[4])
-        self.feat8 = NoisyUpSampling(self.nfc[4], self.nfc[8])
-        self.feat16 = UpSampling(self.nfc[8], self.nfc[16])
-        self.feat32 = NoisyUpSampling(self.nfc[16], self.nfc[32])
-        self.feat64 = UpSampling(self.nfc[32], self.nfc[64])
-        self.feat128 = NoisyUpSampling(self.nfc[64], self.nfc[128])
-        self.feat256 = UpSampling(self.nfc[128], self.nfc[256])
+        self.feat_layers = {
+            8: NoisyUpSampling(self.nfc[4], self.nfc[8]),
+            16: UpSampling(self.nfc[8], self.nfc[16]),
+            32: NoisyUpSampling(self.nfc[16], self.nfc[32]),
+            64: UpSampling(self.nfc[32], self.nfc[64]),
+            128: NoisyUpSampling(self.nfc[64], self.nfc[128]),
+            256: UpSampling(self.nfc[128], self.nfc[256]),
+        }
 
-        self.SLE128 = SkipLayerExcitation(in_ch=self.nfc[8], out_ch=self.nfc[128])
-        self.SLE256 = SkipLayerExcitation(in_ch=self.nfc[16], out_ch=self.nfc[256])
+        self.sle_layers = {
+            128: SkipLayerExcitation(in_ch=self.nfc[8], out_ch=self.nfc[128]),
+            256: SkipLayerExcitation(in_ch=self.nfc[16], out_ch=self.nfc[256]),
+        }
 
         self.last_layer = nn.Sequential(
             nn.Conv2d(self.layer_layer_ch, out_ch, 3, 1, 1),
@@ -141,17 +145,16 @@ class FastGanGenerator(nn.Module):
 
     def forward(self, z: torch.Tensor):
         x = self.init(z)
-        feat8 = self.feat8(x)
-        feat16 = self.feat16(feat8)
-        feat32 = self.feat32(feat16)
-        feat64 = self.feat64(feat32)
-
-        feat128 = self.feat128(feat64)
-        feat128 = self.SLE128(feat128, feat8)
+        feat8 = self.feat_layers[8](x)
+        feat16 = self.feat_layers[16](feat8)
+        feat32 = self.feat_layers[32](feat16)
+        feat64 = self.feat_layers[64](feat32)
+        feat128 = self.feat_layers[128](feat64)
+        feat128 = self.sle_layers[128](feat128, feat8)
 
         if self.resolution > 128:
-            feat256 = self.feat256(feat128)
-            feat = self.SLE256(feat256, feat16)
+            feat256 = self.feat_layers[256](feat128)
+            feat = self.sle_layers[256](feat256, feat16)
         else:
             feat = feat128
 
