@@ -107,6 +107,7 @@ class SkipLayerExcitation(nn.Module):
 
 
 class FastGanGenerator(nn.Module):
+    # pylint: disable=too-many-instance-attributes
     """
     FastGAN generator designed to create images with dimensions 3x256x256
     """
