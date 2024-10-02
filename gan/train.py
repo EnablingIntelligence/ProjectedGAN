@@ -16,6 +16,7 @@ from gan.model import FastGanGenerator, MultiScaleDiscriminator, ProjectionModel
 from gan.utils import HingeLossG, HingeLossD
 
 
+# pylint: disable=too-many-statements
 def train(train_args: Union[Namespace, dict]):
     config = load_config(train_args.config)
     general_cfg = config.general
