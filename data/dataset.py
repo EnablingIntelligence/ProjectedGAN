@@ -32,4 +32,4 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx) -> torch.Tensor:
         img_path = self.img_paths[idx]
         img = Image.open(img_path)
-        return self.transform(img).to(self.device)
+        return self.transform(img)

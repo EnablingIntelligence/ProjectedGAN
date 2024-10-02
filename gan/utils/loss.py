@@ -23,5 +23,4 @@ class HingeLossG(nn.Module):
         super().__init__()
 
     def forward(self, fake_logits):
-        g_loss = -torch.mean(fake_logits)
-        return g_loss
+        return -torch.mean(fake_logits)

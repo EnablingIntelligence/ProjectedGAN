@@ -1,5 +1,6 @@
 from torch import nn
 from torch.nn.utils import spectral_norm
+from gan.utils import weights_init
 
 
 class Conv2DSN(nn.Module):
@@ -11,6 +12,8 @@ class Conv2DSN(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.conv = spectral_norm(nn.Conv2d(*args, **kwargs))
+
+        self.apply(weights_init)
 
     def forward(self, x):
         return self.conv(x)
@@ -24,6 +27,8 @@ class ConvTranspose2DSN(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.conv_transpose = spectral_norm(nn.ConvTranspose2d(*args, **kwargs))
+
+        self.apply(weights_init)
 
     def forward(self, x):
         return self.conv_transpose(x)

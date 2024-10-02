@@ -1,30 +1,37 @@
 general:
   img_file_type: 'jpg'
-  data_path: './data'
-  result_path: './results'
+  data_path: '../data/pokemon'
+  result_path: '../results'
+
+  checkpoint:
+    load_checkpoint: false
+    generator_path: ''
+    discriminator_path: ''
 
 training:
-  batch_size: 4
-  num_epochs: 10
-  latent_dim: 256
+  batch_size: 16
+  num_epochs: 500
   resolution: 256
-  num_workers: 1
+  num_workers: 4
   num_channels: 3
 
   logging:
     interval: 1
-    batch_size: 4
+    batch_size: 8
+
+  checkpoint:
+    interval: 100
 
 discriminator:
   optimizer:
-    beta1: 0.999
-    beta2: 0.5
-    lr: 0.002
+    beta1: 0
+    beta2: 0.999
+    lr: 0.0002
 
 generator:
-  ngf: 64
-  z_dim: 256
+  ngf: 128
+  z_dim: 100
   optimizer:
-    beta1: 0.999
-    beta2: 0.5
-    lr: 0.002
+    beta1: 0
+    beta2: 0.999
+    lr: 0.0002

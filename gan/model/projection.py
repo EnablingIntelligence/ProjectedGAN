@@ -136,9 +136,3 @@ class ProjectionModel(nn.Module):
 
     def get_ch(self, feat):
         return feat.shape[1]
-
-
-def print_feat_shape(features):
-    for idx in features.keys():
-        print(features[idx].shape)
-    print()
