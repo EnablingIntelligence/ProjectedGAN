@@ -16,6 +16,7 @@ ignored-argument-names = "_.*|^ignored_|^unused_"
 max-line-length=120
 
 [DESIGN]
-max-args=10
+max-args=15
 min-public-methods=1
-max-locals=20
+max-locals=50
+max-statements=60 
