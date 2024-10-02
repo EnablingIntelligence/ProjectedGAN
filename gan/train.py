@@ -55,9 +55,7 @@ def train(train_args: Union[Namespace, dict]):
 
     projection = ProjectionModel(resolution=train_cfg.resolution).to(device)
 
-    discriminator = MultiScaleDiscriminator(feature_channels=projection.channels).to(
-        device
-    )
+    discriminator = MultiScaleDiscriminator(feature_channels=projection.channels).to(device)
 
     checkpoint_cfg = general_cfg.checkpoint
 
@@ -149,7 +147,7 @@ def train(train_args: Union[Namespace, dict]):
         if epoch % train_cfg.logging.interval == 0:
             fake_images = generator(z_benchmark)
             image_grid = make_grid(fake_images, normalize=True)
-            writer.add_image(tag="GenIamge", img_tensor=image_grid, global_step=epoch)
+            writer.add_image(tag="GenImage", img_tensor=image_grid, global_step=epoch)
 
         if epoch % train_cfg.checkpoint.interval == 0:
             current_time_in_millis = int(round(time.time() * 1000))

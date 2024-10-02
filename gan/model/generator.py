@@ -38,8 +38,9 @@ class UpSampling(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.model(x)
 
+
 class NoisyUpSampling(nn.Module):
-    def __init__(self, in_ch: int, out_ch:int):
+    def __init__(self, in_ch: int, out_ch: int):
         super().__init__()
 
         self.model = nn.Sequential(
@@ -117,19 +118,15 @@ class FastGanGenerator(nn.Module):
         self.layer_layer_ch = self.nfc[resolution]
 
         self.init = InputLayer(z_dim, self.nfc[4])
-        self.feat_layers = {
-            8: NoisyUpSampling(self.nfc[4], self.nfc[8]),
-            16: UpSampling(self.nfc[8], self.nfc[16]),
-            32: NoisyUpSampling(self.nfc[16], self.nfc[32]),
-            64: UpSampling(self.nfc[32], self.nfc[64]),
-            128: NoisyUpSampling(self.nfc[64], self.nfc[128]),
-            256: UpSampling(self.nfc[128], self.nfc[256]),
-        }
+        self.feat_8 = NoisyUpSampling(self.nfc[4], self.nfc[8])
+        self.feat_16 = UpSampling(self.nfc[8], self.nfc[16])
+        self.feat_32 = NoisyUpSampling(self.nfc[16], self.nfc[32])
+        self.feat_64 = UpSampling(self.nfc[32], self.nfc[64])
+        self.feat_128 = NoisyUpSampling(self.nfc[64], self.nfc[128])
+        self.feat_256 = UpSampling(self.nfc[128], self.nfc[256])
 
-        self.sle_layers = {
-            128: SkipLayerExcitation(in_ch=self.nfc[8], out_ch=self.nfc[128]),
-            256: SkipLayerExcitation(in_ch=self.nfc[16], out_ch=self.nfc[256]),
-        }
+        self.sle_128 = SkipLayerExcitation(in_ch=self.nfc[8], out_ch=self.nfc[128])
+        self.sle_256 = SkipLayerExcitation(in_ch=self.nfc[16], out_ch=self.nfc[256])
 
         self.last_layer = nn.Sequential(
             nn.Conv2d(self.layer_layer_ch, out_ch, 3, 1, 1),
@@ -138,23 +135,18 @@ class FastGanGenerator(nn.Module):
 
         self.apply(weights_init)
 
-    def get_feat_channels(self, ngf):
-        nfc_multiplier = {4: 16, 8: 8, 16: 4, 32: 2, 64: 2, 128: 1, 256: 0.5, 512: 0.25}
-        nfc = {k: int(v * ngf) for k, v in nfc_multiplier.items()}
-        return nfc
-
     def forward(self, z: torch.Tensor):
         x = self.init(z)
-        feat8 = self.feat_layers[8](x)
-        feat16 = self.feat_layers[16](feat8)
-        feat32 = self.feat_layers[32](feat16)
-        feat64 = self.feat_layers[64](feat32)
-        feat128 = self.feat_layers[128](feat64)
-        feat128 = self.sle_layers[128](feat128, feat8)
+        feat8 = self.feat_8(x)
+        feat16 = self.feat_16(feat8)
+        feat32 = self.feat_32(feat16)
+        feat64 = self.feat_64(feat32)
+        feat128 = self.feat_128(feat64)
+        feat128 = self.sle_128(feat128, feat8)
 
         if self.resolution > 128:
-            feat256 = self.feat_layers[256](feat128)
-            feat = self.sle_layers[256](feat256, feat16)
+            feat256 = self.feat_256(feat128)
+            feat = self.sle_256(feat256, feat16)
         else:
             feat = feat128
 
@@ -166,3 +158,9 @@ class FastGanGenerator(nn.Module):
 
     def load(self, path: str):
         self.load_state_dict(torch.load(path))
+
+    @staticmethod
+    def get_feat_channels(ngf):
+        nfc_multiplier = {4: 16, 8: 8, 16: 4, 32: 2, 64: 2, 128: 1, 256: 0.5, 512: 0.25}
+        nfc = {k: int(v * ngf) for k, v in nfc_multiplier.items()}
+        return nfc
