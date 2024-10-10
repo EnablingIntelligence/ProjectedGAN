@@ -126,7 +126,9 @@ class FastGanGenerator(nn.Module):
         self.feat128 = NoisyUpSampling(self.nfc[64], self.nfc[128])
         self.feat256 = UpSampling(self.nfc[128], self.nfc[256])
 
+        # pylint: disable-next=invalid-name
         self.SLE128 = SkipLayerExcitation(in_ch=self.nfc[8], out_ch=self.nfc[128])
+        # pylint: disable-next=invalid-name
         self.SLE256 = SkipLayerExcitation(in_ch=self.nfc[16], out_ch=self.nfc[256])
 
         self.last_layer = nn.Sequential(
