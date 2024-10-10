@@ -2,13 +2,15 @@ FROM python:3.11
 
 WORKDIR /src/app
 
-# TODO includ model dependencies
-COPY ./requirements.txt /src/requirements.txt
-RUN pip install --no-cache-dir --upgrade -r /src/requirements.txt
+COPY ./web_requirements.txt /src/web_requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /src/web_requirements.txt
 
 COPY ./app .
 
-# TODO copy model
+COPY ./model_requirements.txt /src/model_requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /src/model_requirements.txt
+
+COPY ./gan .
 
 EXPOSE 8080
 CMD ["fastapi", "run", "main.py", "--port", "8080"]
