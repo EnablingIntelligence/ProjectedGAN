@@ -7,7 +7,7 @@ from io import BytesIO
 
 from gan import ImageGenerator
 
-image_generator = ImageGenerator(ckpt_path="../gan/ckpt/generator.pth")
+image_generator = ImageGenerator(ckpt_path="./gan/ckpt/generator.pth")
 
 app = FastAPI(title="Projected GAN Image Generator", version="0.1.0")
 app.mount("/resources", StaticFiles(directory="resources"), name="resources")
